@@ -6,7 +6,12 @@ import websockets
 import asyncio
 import json
 import ssl
-from typing import Dict, Any, List, Optional
+import re
+import time
+import argparse
+from typing import Dict, Any, List, Optional, Tuple
+from datetime import datetime
+from urllib.parse import urlparse, quote
 
 class WebSocketTester:
     """Advanced WebSocket security testing"""
@@ -2177,11 +2182,68 @@ class DNSRebindingTester:
         return findings
 
 # ============================================================================
+# BASE CLASSES FOR COMPATIBILITY
+# ============================================================================
+
+# Define base classes that would be imported from phase 1
+class ScanConfig:
+    def __init__(self, target, mode=None, max_concurrent=100):
+        self.target = target
+        self.mode = mode
+        self.max_concurrent = max_concurrent
+        self.user_agent = "BugHunterPro/2.1"
+
+class ScanMode:
+    FAST = "fast"
+    NORMAL = "normal"
+    DEEP = "deep"
+    AGGRESSIVE = "aggressive"
+
+class BugHunterPro:
+    """Base BugHunterPro class"""
+    def __init__(self, config):
+        self.config = config
+        self.session = None
+        self.results = []
+        self.stats = {}
+        self.modules = {}
+    
+    async def init_session(self):
+        """Initialize HTTP session"""
+        import aiohttp
+        self.session = aiohttp.ClientSession()
+    
+    async def close_session(self):
+        """Close HTTP session"""
+        if self.session:
+            await self.session.close()
+    
+    def print_summary(self):
+        """Print scan summary"""
+        print("\n" + "="*60)
+        print("SCAN COMPLETE")
+        print("="*60)
+        print(f"Total vulnerabilities found: {len(self.results)}")
+        
+        # Count by severity
+        severities = {}
+        for finding in self.results:
+            sev = finding.get("severity", "unknown")
+            severities[sev] = severities.get(sev, 0) + 1
+        
+        for sev, count in sorted(severities.items()):
+            print(f"  {sev.upper()}: {count}")
+        
+        if self.results:
+            print("\nTop findings:")
+            for finding in self.results[:5]:
+                print(f"  • [{finding['severity'].upper()}] {finding['title']}")
+
+# ============================================================================
 # INTEGRATION INTO MAIN ENGINE
 # ============================================================================
 
 # Add these new modules to the BugHunterPro class
-
 class BugHunterProEnhanced(BugHunterPro):
     """Enhanced BugHunterPro with Phase 2 modules"""
     
@@ -2198,6 +2260,18 @@ class BugHunterProEnhanced(BugHunterPro):
             "rate_limiting": RateLimitingTester(self),
             "dns_rebinding": DNSRebindingTester(self)
         })
+        
+        # Create dummy modules for phase 1 functionality
+        class DummyModule:
+            async def run(self): return []
+            async def crawl(self, x): return []
+            async def scan(self, x): return []
+            async def test(self, x): return []
+            async def generate(self, x): pass
+        
+        for name in ["recon", "crawler", "scanner", "api_tester", "report"]:
+            if name not in self.modules:
+                self.modules[name] = DummyModule()
     
     async def run_full_assessment(self):
         """Run complete security assessment with Phase 2 modules"""
@@ -2207,7 +2281,7 @@ class BugHunterProEnhanced(BugHunterPro):
             await self.init_session()
             
             print(f"[+] Target: {self.config.target}")
-            print(f"[+] Mode: {self.config.mode.value}")
+            print(f"[+] Mode: {self.config.mode}")
             print(f"[+] Starting comprehensive security assessment...\n")
             
             # ==================== PHASE 1: RECONNAISSANCE ====================
@@ -2381,7 +2455,7 @@ Examples:
     # Create config
     config = ScanConfig(
         target=args.target,
-        mode=ScanMode(args.mode),
+        mode=args.mode,
         max_concurrent=args.workers
     )
     
