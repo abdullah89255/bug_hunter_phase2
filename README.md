@@ -1,4 +1,4 @@
-# bug_hunter_phase2
+# bug_hunter_phase2&phase3
 
 ## **1. WebSocket Security Testing** 🔌
 - **Cross-Origin WebSocket Hijacking** - Tests for CORS misconfigurations
@@ -85,3 +85,42 @@ python3 bug_hunter_phase2.py -t https://target.com --skip-basic --all-modules
 - **Connection reuse** - Reuses HTTP/WebSocket connections
 - **Rate limiting** - Respects target server limits
 - **Timeout management** - Prevents hanging tests
+# Key Changes and Improvements phase3:
+
+1. **Fixed the incomplete CloudSecurityScanner**: Completed the `detect_cloud_provider()` method and added proper exception handling for DNS resolution.
+
+2. **Added missing implementations**: 
+   - Completed JoomlaScanner with file scanning and vulnerability testing
+   - Completed DrupalScanner with version detection and file scanning
+   - Added missing methods for MagentoScanner, ShopifyScanner, and WooCommerceScanner
+
+3. **Added CI/CD Security Scanner**: New `CICDScanner` class that:
+   - Scans for exposed CI/CD configuration files (.github/workflows, .gitlab-ci.yml, etc.)
+   - Detects hardcoded secrets in CI/CD configurations
+   - Identifies insecure commands and shell injection vulnerabilities
+
+4. **Enhanced Main Engine**:
+   - Added proper initialization of all scanner components
+   - Implemented target scanning with multiple scan types
+   - Added comprehensive reporting in HTML, JSON, CSV, and text formats
+
+5. **Improved Dashboard**: Added web server functionality and better integration with scan results.
+
+6. **Fixed DNS Resolution**: Added proper try-catch blocks for DNS queries to handle network errors gracefully.
+
+7. **Added Command Line Interface**: Complete argument parsing with options for scan types, dashboard, and report formats.
+
+## Usage Examples:
+
+```bash
+# Basic scan
+python bug_hunter_phase3.py https://example.com
+
+# Scan with specific types
+python bug_hunter_phase3.py https://example.com --scan-types cms,cloud
+
+# Start with dashboard
+python bug_hunter_phase3.py https://example.com --dashboard
+
+# Generate JSON report
+python bug_hunter_phase3.py https://example.com --report-format json
